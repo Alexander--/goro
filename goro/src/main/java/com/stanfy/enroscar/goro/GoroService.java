@@ -255,6 +255,18 @@ public class GoroService extends Service {
     return delegateExecutor != null ? createWithDelegate(delegateExecutor) : create();
   }
 
+  protected boolean isActive() {
+    boolean tasksRunning = binder != null && binder.listener.activeTasksCount > 0;
+    if (DEBUG) {
+      Log.w(TAG, "isServiceActive: " + hasBoundUsers + ", " + tasksRunning);
+    }
+    return hasBoundUsers || tasksRunning;
+  }
+
+  protected void stop() {
+    stopSelf();
+  }
+
   /** Returns a Goro instance. */
   public interface GoroBinder extends IBinder {
     Goro goro();
@@ -347,14 +359,6 @@ public class GoroService extends Service {
       removeMessages(MSG_CHECK_FOR_STOP);
     }
 
-    private static boolean isServiceActive(final GoroService service) {
-      boolean tasksRunning = service.binder != null && service.binder.listener.activeTasksCount > 0;
-      if (DEBUG) {
-        Log.w(TAG, "isServiceActive: " + service.hasBoundUsers + ", " + tasksRunning);
-      }
-      return service.hasBoundUsers || tasksRunning;
-    }
-
     @Override
     public void handleMessage(final Message msg) {
       final GoroService service = serviceRef.get();
@@ -362,7 +366,7 @@ public class GoroService extends Service {
 
       switch (msg.what) {
         case MSG_CHECK_FOR_STOP:
-          if (!isServiceActive(service)) {
+          if (!service.isActive()) {
             if (DEBUG) {
               Log.w(TAG, "send stop");
             }
@@ -374,7 +378,7 @@ public class GoroService extends Service {
           if (DEBUG) {
             Log.w(TAG, "do stop");
           }
-          service.stopSelf();
+          service.stop();
           break;
 
         default:

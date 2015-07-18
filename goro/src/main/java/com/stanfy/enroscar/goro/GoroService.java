@@ -68,6 +68,8 @@ public class GoroService extends Service {
   /** Binder instance. */
   private GoroBinderImpl binder;
 
+  private int bindingCounter;
+
   /** Stop handler. */
   private final StopHandler stopHandler = new StopHandler(this);
 
@@ -215,6 +217,7 @@ public class GoroService extends Service {
     if (DEBUG) {
       Log.i(TAG, "bind");
     }
+    bindingCounter++;
     hasBoundUsers = true;
     stopHandler.doNotStop();
     return getBinder();
@@ -225,7 +228,7 @@ public class GoroService extends Service {
     if (DEBUG) {
       Log.i(TAG, "unbind");
     }
-    hasBoundUsers = false;
+    hasBoundUsers = --bindingCounter > 0;
     stopHandler.checkForStop();
     return true;
   }
@@ -235,6 +238,7 @@ public class GoroService extends Service {
     if (DEBUG) {
       Log.i(TAG, "rebind");
     }
+    bindingCounter++;
     hasBoundUsers = true;
     stopHandler.doNotStop();
   }

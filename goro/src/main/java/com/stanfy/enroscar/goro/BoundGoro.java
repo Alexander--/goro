@@ -379,7 +379,7 @@ public abstract class BoundGoro extends Goro implements ServiceConnection {
       }
 
       @Override
-      public synchronized void subscribe(final Executor executor, final FutureObserver<T> observer) {
+      public synchronized void subscribe(final Executor executor, final FutureObserver<? super T> observer) {
         if (goroFuture != null) {
           goroFuture.subscribe(executor, observer);
           return;
@@ -395,7 +395,7 @@ public abstract class BoundGoro extends Goro implements ServiceConnection {
       }
 
       @Override
-      public void subscribe(final FutureObserver<T> observer) {
+      public void subscribe(final FutureObserver<? super T> observer) {
         subscribe(IMMEDIATE, observer);
       }
 

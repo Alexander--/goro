@@ -83,12 +83,12 @@ final class GoroFuture<T> extends FutureTask<T> implements ObservableFuture<T> {
   }
 
   @Override
-  public void subscribe(final Executor executor, final FutureObserver<T> observer) {
+  public void subscribe(final Executor executor, final FutureObserver<? super T> observer) {
     observers.add(new ObserverRunnable<>(observer, this), executor);
   }
 
   @Override
-  public void subscribe(final FutureObserver<T> observer) {
+  public void subscribe(final FutureObserver<? super T> observer) {
     subscribe(IMMEDIATE, observer);
   }
 
@@ -99,12 +99,12 @@ final class GoroFuture<T> extends FutureTask<T> implements ObservableFuture<T> {
   static final class ObserverRunnable<T> implements Runnable {
 
     /** Observer reference. */
-    private final FutureObserver<T> observer;
+    private final FutureObserver<? super T> observer;
 
     /** Future instance. */
     GoroFuture<T> future;
 
-    ObserverRunnable(final FutureObserver<T> observer, final GoroFuture<T> future) {
+    ObserverRunnable(final FutureObserver<? super T> observer, final GoroFuture<T> future) {
       this.observer = observer;
       this.future = future;
     }

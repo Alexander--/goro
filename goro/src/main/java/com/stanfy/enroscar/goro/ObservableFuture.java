@@ -13,8 +13,8 @@ import java.util.concurrent.Future;
  */
 public interface ObservableFuture<V> extends Future<V> {
 
-  void subscribe(Executor executor, FutureObserver<V> observer);
+  void subscribe(Executor executor, FutureObserver<? super V> observer);
 
-  void subscribe(FutureObserver<V> observer);
+  void subscribe(FutureObserver<? super V> observer);
 
 }

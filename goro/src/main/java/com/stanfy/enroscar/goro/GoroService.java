@@ -4,6 +4,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.pm.ResolveInfo;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.Handler;
@@ -24,9 +25,13 @@ import static com.stanfy.enroscar.goro.Goro.createWithDelegate;
  */
 public class GoroService extends Service {
 
+  private static final String GORO_INTENT_ACTION = "com.stanfy.enroscar.goro.SERVICE";
+
   private static final boolean DEBUG = BuildConfig.DEBUG;
 
   private static final String TAG = "Goro";
+
+  private static final Intent intent = new Intent(GORO_INTENT_ACTION);
 
   /**
    * Used as a {@link java.lang.String} field in service command intent to pass
@@ -81,6 +86,22 @@ public class GoroService extends Service {
     GoroService.delegateExecutor = delegateExecutor;
   }
 
+  private static Intent getIntent(Context context) {
+    if (intent.getComponent() == null) {
+      final String selfPackage = context.getPackageName();
+
+      intent.setPackage(selfPackage);
+
+      final ResolveInfo ri = context.getPackageManager().resolveService(intent, 0);
+
+      if (ri != null && selfPackage.equals(ri.serviceInfo.packageName)) {
+        intent.setClassName(context.getPackageName(), ri.serviceInfo.name);
+      }
+    }
+
+    return new Intent(intent);
+  }
+
   /**
    * Create an intent that contains a task that should be scheduled
    * on a defined queue.
@@ -98,7 +119,7 @@ public class GoroService extends Service {
     // XXX http://code.google.com/p/android/issues/detail?id=6822
     Bundle bundle = new Bundle();
     bundle.putParcelable(EXTRA_TASK, task);
-    return new Intent(context, GoroService.class)
+    return getIntent(context)
         .putExtra(EXTRA_TASK_BUNDLE, bundle)
         .putExtra(EXTRA_QUEUE_NAME, queueName);
   }
@@ -123,9 +144,9 @@ public class GoroService extends Service {
    * @throws GoroException when service is not declared in the application manifest
    */
   public static void bind(final Context context, final ServiceConnection connection) {
-    Intent serviceIntent = new Intent(context, GoroService.class);
+    Intent serviceIntent = getIntent(context);
     if (context.startService(serviceIntent) == null) {
-      throw new GoroException("Service " + GoroService.class
+      throw new GoroException("Service " + intent.getComponent()
           + " does not seem to be included to your manifest file");
     }
     boolean bound = context.bindService(serviceIntent, connection, 0);

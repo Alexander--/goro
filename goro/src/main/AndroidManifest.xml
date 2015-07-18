@@ -7,7 +7,11 @@
 
     <service
         android:name=".GoroService"
-        android:exported="false" />
+        android:exported="false" >
+        <intent-filter>
+            <action android:name="com.stanfy.enroscar.goro.SERVICE" />
+        </intent-filter>
+    </service>
 
   </application>
 

@@ -230,7 +230,7 @@ public class GoroService extends Service {
 
   @SuppressWarnings("unchecked")
   private static void ensureErrorWillBeThrown(final ObservableFuture<?> future) {
-    future.subscribe(ERROR_THROWER);
+    future.subscribe(new MainThreadExecutor(), ERROR_THROWER);
   }
 
   @Override

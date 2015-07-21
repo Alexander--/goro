@@ -13,7 +13,7 @@ class ExecutionObserversList {
   private ObserverExecutorPair observersHead;
 
   /** Flag indicating that subscribers are already notified. */
-  private boolean executed;
+  private volatile boolean executed;
 
   public void add(final Runnable runnable, final Executor executor) {
 

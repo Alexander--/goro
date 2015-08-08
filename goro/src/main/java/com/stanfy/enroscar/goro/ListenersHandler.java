@@ -1,8 +1,11 @@
 package com.stanfy.enroscar.goro;
 
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.os.Messenger;
+import android.os.RemoteException;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -12,6 +15,7 @@ import java.util.concurrent.Callable;
  * Handler for calling listener methods. Works in the main thread.
  */
 class ListenersHandler extends BaseListenersHandler {
+  private static final String MESSAGE_KEY = "com.stanfy.enroscar.goro.MessageData";
 
   /** Message code. */
   private static final int MSG_START = 1, MSG_FINISH = 2, MSG_ERROR = 3, MSG_CANCEL = 4,
@@ -20,41 +24,77 @@ class ListenersHandler extends BaseListenersHandler {
   /** Initial capacity. */
   private static final int INIT_CAPACITY = 5;
 
-  /** Handler implementation. */
-  private final H h = new H(this);
+  private final Messenger messenger;
+
+  public ListenersHandler(Messenger messenger) {
+    super(INIT_CAPACITY);
+
+    this.messenger = messenger;
+  }
 
   public ListenersHandler() {
     super(INIT_CAPACITY);
+
+    messenger = new Messenger(new H(this));
+  }
+
+  public Messenger getMessenger() {
+    return messenger;
   }
 
   public void postSchedule(final Callable<?> task, final String queue) {
-    Message msg = h.obtainMessage(MSG_SCHEDULE);
-    msg.obj = new MessageData(task, null, queue);
-    h.sendMessage(msg);
+    try {
+      Message msg = Message.obtain(null, MSG_SCHEDULE);
+      Bundle data = msg.getData();
+      data.putParcelable(MESSAGE_KEY, new MessageData(task, null, queue));
+      messenger.send(msg);
+    } catch (RemoteException e) {
+      // this object should be deactivated soon
+    }
   }
 
   public void postStart(final Callable<?> task) {
-    Message msg = h.obtainMessage(MSG_START);
-    msg.obj = new MessageData(task, null, null);
-    h.sendMessage(msg);
+    try {
+      Message msg = Message.obtain(null, MSG_START);
+      Bundle data = msg.getData();
+      data.putParcelable(MESSAGE_KEY, new MessageData(task, null, null));
+      messenger.send(msg);
+    } catch (RemoteException ignore) {
+      // this object should be deactivated soon
+    }
   }
 
   public void postFinish(final Callable<?> task, Object result) {
-    Message msg = h.obtainMessage(MSG_FINISH);
-    msg.obj = new MessageData(task, result, null);
-    h.sendMessage(msg);
+    try {
+      Message msg = Message.obtain(null, MSG_FINISH);
+      Bundle data = msg.getData();
+      data.putParcelable(MESSAGE_KEY, new MessageData(task, result, null));
+      messenger.send(msg);
+    } catch (RemoteException ignore) {
+      // this object should be deactivated soon
+    }
   }
 
   public void postError(final Callable<?> task, Throwable error) {
-    Message msg = h.obtainMessage(MSG_ERROR);
-    msg.obj = new MessageData(task, error, null);
-    h.sendMessage(msg);
+    try {
+      Message msg = Message.obtain(null, MSG_ERROR);
+      Bundle data = msg.getData();
+      data.putParcelable(MESSAGE_KEY, new MessageData(task, error, null));
+      messenger.send(msg);
+    } catch (RemoteException ignore) {
+      // this object should be deactivated soon
+    }
   }
 
   public void postCancel(final Callable<?> task) {
-    Message msg = h.obtainMessage(MSG_CANCEL);
-    msg.obj = new MessageData(task, null, null);
-    h.sendMessage(msg);
+    try {
+      Message msg = Message.obtain(null, MSG_CANCEL);
+      Bundle data = msg.getData();
+      data.putParcelable(MESSAGE_KEY, new MessageData(task, null, null));
+      messenger.send(msg);
+    } catch (RemoteException ignore) {
+      // this object should be deactivated soon
+    }
   }
 
   /** Handler implementation. */
@@ -81,7 +121,9 @@ class ListenersHandler extends BaseListenersHandler {
       // make a copy of listeners to allow them to modify listeners collection
       taskListeners = new ArrayList<>(taskListeners);
 
-      MessageData data = (MessageData) msg.obj;
+      Bundle resultBundle = msg.getData();
+      resultBundle.setClassLoader(ListenersHandler.class.getClassLoader());
+      MessageData data = resultBundle.getParcelable(MESSAGE_KEY);
       if (data == null) {
         throw new IllegalArgumentException("Data cannot be null");
       }
@@ -121,23 +163,6 @@ class ListenersHandler extends BaseListenersHandler {
           throw new IllegalArgumentException("Unexpected message " + msg);
       }
 
-    }
-  }
-
-
-  /** Message data. */
-  private static class MessageData {
-    /** Queue name. */
-    final String queue;
-    /** Task instance. */
-    final Callable<?> task;
-    /** Error instance. */
-    final Object resultOrError;
-
-    public MessageData(final Callable<?> task, final Object resultOrError, final String queue) {
-      this.task = task;
-      this.resultOrError = resultOrError;
-      this.queue = queue;
     }
   }
 

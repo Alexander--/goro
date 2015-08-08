@@ -86,7 +86,7 @@ public class GoroService extends Service {
     GoroService.delegateExecutor = delegateExecutor;
   }
 
-  private static Intent getIntent(Context context) {
+  static Intent getIntent(Context context) {
     if (intent.getComponent() == null) {
       final String selfPackage = context.getPackageName();
 
